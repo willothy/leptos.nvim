@@ -4,16 +4,18 @@ end)()
 
 local cwd = vim.fn.fnamemodify(sourced_filename, ":h")
 
-vim.system({
+local o = vim.system({
 	"cargo",
 	"build",
 	"--release",
 }, {
 	cwd = cwd,
-}, function(o)
-	if o.code ~= 0 then
-		error(o.stderr)
-	end
+	stderr = vim.schedule_wrap(function(_, data)
+		vim.api.nvim_out_write(data or "")
+	end),
+}):wait()
 
-	vim.uv.fs_copyfile(cwd .. "/target/release/libleptos.so", "lua/leptos.so")
-end)
+if o.code ~= 0 then
+	error(o.stderr)
+end
+vim.uv.fs_copyfile(cwd .. "/target/release/libleptos_nvim.so", cwd .. "/lua/leptos.so")
