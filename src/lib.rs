@@ -1,5 +1,17 @@
-use leptos_reactive::{SignalGet, SignalSet, SignalUpdate};
-use mlua::{Function, Lua, Table, Value};
+use leptos_reactive::{SignalDispose, SignalGet, SignalSet, SignalUpdate, WriteSignal};
+use mlua::{Function, Lua, Table, UserData, Value};
+
+struct SignalProxy {
+    write: WriteSignal<Value<'static>>,
+}
+
+impl UserData for SignalProxy {}
+
+impl Drop for SignalProxy {
+    fn drop(&mut self) {
+        self.write.dispose();
+    }
+}
 
 fn create_effect(_: &'static Lua, args: (Function<'static>,)) -> mlua::Result<()> {
     leptos_reactive::create_effect(move |v: Option<Value>| {
@@ -31,6 +43,9 @@ fn create_signal(lua: &'static Lua, args: (Value<'static>,)) -> mlua::Result<Tab
             Ok(())
         }),
     )?;
+
+    let proxy = lua.create_any_userdata(SignalProxy { write })?;
+    t.set("_proxy", proxy)?;
     Ok(t)
 }
 
