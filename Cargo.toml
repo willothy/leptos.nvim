@@ -1,0 +1,18 @@
+[package]
+name = "leptos-nvim"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+leptos_reactive = { git = "https://github.com/leptos-rs/leptos", version = "0.5.0-rc2" }
+mlua = { version = "0.9.1", features = [
+  "luajit",
+  "serde",
+  "module",
+  "macros",
+  "serialize",
+  "luajit52",
+] }
