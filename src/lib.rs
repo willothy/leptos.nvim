@@ -1,15 +1,18 @@
-use leptos_reactive::{SignalDispose, SignalGet, SignalSet, SignalUpdate, WriteSignal};
+use leptos_reactive::{SignalDispose, SignalGet, SignalSet, SignalUpdate};
 use mlua::{Function, Lua, Table, UserData, Value};
 
-struct SignalProxy {
-    write: WriteSignal<Value<'static>>,
-}
+struct Proxy<T>(T)
+where
+    T: SignalDispose + Copy;
 
-impl UserData for SignalProxy {}
+impl<T> UserData for Proxy<T> where T: SignalDispose + Copy {}
 
-impl Drop for SignalProxy {
+impl<T> Drop for Proxy<T>
+where
+    T: SignalDispose + Copy,
+{
     fn drop(&mut self) {
-        self.write.dispose();
+        self.0.dispose();
     }
 }
 
@@ -44,7 +47,7 @@ fn create_signal(lua: &'static Lua, args: (Value<'static>,)) -> mlua::Result<Tab
         }),
     )?;
 
-    let proxy = lua.create_any_userdata(SignalProxy { write })?;
+    let proxy = lua.create_any_userdata(Proxy(write))?;
     t.set("_proxy", proxy)?;
     Ok(t)
 }
